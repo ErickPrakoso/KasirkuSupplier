@@ -2,7 +2,7 @@ package com.example.kasirku_supplier_2.utils
 
 import android.content.Context
 import android.os.Environment
-import com.example.kasirku_supplier_2.models.Supplier
+import com.example.kasirku_supplier_2.entities.Supplier
 import java.io.File
 import java.io.FileOutputStream
 

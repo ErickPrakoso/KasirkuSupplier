@@ -1,7 +1,7 @@
-package com.example.kasirku_supplier_2.data.repository
+package com.example.kasirku_supplier_2.database
 
-import com.example.kasirku_supplier_2.data.db.SupplierDao
-import com.example.kasirku_supplier_2.models.Supplier
+import com.example.kasirku_supplier_2.dao.SupplierDao
+import com.example.kasirku_supplier_2.entities.Supplier
 import kotlinx.coroutines.flow.Flow
 
 class SupplierRepository(private val dao: SupplierDao) {

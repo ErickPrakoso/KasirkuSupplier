@@ -1,8 +1,8 @@
-package com.example.kasirku_supplier_2.ui.screens
+package com.example.kasirku_supplier_2.supplier
 
-import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,7 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.example.kasirku_supplier_2.components.SupplierItem
-import com.example.kasirku_supplier_2.models.Supplier
+import com.example.kasirku_supplier_2.entities.Supplier
 import com.example.kasirku_supplier_2.ui.theme.*
 import com.example.kasirku_supplier_2.ui.viewmodel.SupplierViewModel
 
@@ -32,8 +32,9 @@ fun SupplierScreen(viewModel: SupplierViewModel, onShowInfo: (Supplier) -> Unit)
     var showForm by remember { mutableStateOf(false) }
     var editingSupplier by remember { mutableStateOf<Supplier?>(null) }
     var dropdownExpandedId by remember { mutableStateOf<Int?>(null) }
-    var searchText by remember { mutableStateOf("") }
-    var isSearchActive by remember { mutableStateOf(false) }
+
+    var searchText by rememberSaveable { mutableStateOf("") }
+    var isSearchActive by rememberSaveable { mutableStateOf(false) }
 
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -62,9 +63,12 @@ fun SupplierScreen(viewModel: SupplierViewModel, onShowInfo: (Supplier) -> Unit)
         Toast.makeText(context, "Supplier deleted", Toast.LENGTH_SHORT).show()
     }
 
-    val filteredSuppliers = supplierList.filter {
-        it.name.contains(searchText, ignoreCase = true) || it.address.contains(searchText, ignoreCase = true)
-    }
+    val filteredSuppliers = supplierList
+        .sortedBy { it.id } // agar urut by id
+        .filter {
+            it.name.contains(searchText, ignoreCase = true) ||
+                    it.address.contains(searchText, ignoreCase = true)
+        }
 
     Scaffold(
         topBar = {
@@ -88,11 +92,11 @@ fun SupplierScreen(viewModel: SupplierViewModel, onShowInfo: (Supplier) -> Unit)
                         Text("Supplier", color = AccentText)
                     }
                 },
-                backgroundColor = DarkCard,
+                backgroundColor = PrimaryBlue,
                 actions = {
                     if (!isSearchActive) {
                         IconButton(onClick = { isSearchActive = true }) {
-                            Icon(imageVector = Icons.Filled.Search, contentDescription = "Search", tint = AccentText)
+                            Icon(Icons.Default.Search, contentDescription = "Search", tint = AccentText)
                         }
                         IconButton(onClick = {
                             exportCsvTrigger = true
@@ -104,7 +108,7 @@ fun SupplierScreen(viewModel: SupplierViewModel, onShowInfo: (Supplier) -> Unit)
                             isSearchActive = false
                             searchText = ""
                         }) {
-                            Icon(imageVector = Icons.Filled.Close, contentDescription = "Close", tint = AccentText)
+                            Icon(Icons.Default.Close, contentDescription = "Close", tint = AccentText)
                         }
                     }
                 }
@@ -123,12 +127,12 @@ fun SupplierScreen(viewModel: SupplierViewModel, onShowInfo: (Supplier) -> Unit)
                     postalCode = ""
                     showForm = true
                 },
-                backgroundColor = AccentGreen
+                backgroundColor = PrimaryBlue
             ) {
                 Text("+", color = Color.White, fontSize = 24.sp)
             }
         },
-        backgroundColor = DarkBackground
+        backgroundColor = LightBackground
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -136,7 +140,10 @@ fun SupplierScreen(viewModel: SupplierViewModel, onShowInfo: (Supplier) -> Unit)
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
                 items(filteredSuppliers) { supplier ->
                     SupplierItem(
                         supplier = supplier,
@@ -151,35 +158,23 @@ fun SupplierScreen(viewModel: SupplierViewModel, onShowInfo: (Supplier) -> Unit)
         }
     }
 
-    LaunchedEffect(exportCsvTrigger) {
-        if (exportCsvTrigger) {
+    if (exportCsvTrigger) {
+        LaunchedEffect(exportCsvTrigger) {
             viewModel.exportToCsv(context) { file ->
-                Toast.makeText(
-                    context,
-                    "CSV disimpan di:\n${file.name}",
-                    Toast.LENGTH_SHORT
-                ).show()
-
+                Toast.makeText(context, "CSV disimpan di:\n${file.name}", Toast.LENGTH_SHORT).show()
                 val uri = FileProvider.getUriForFile(
                     context,
                     "${context.packageName}.provider",
                     file
                 )
-
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/csv"
                     putExtra(Intent.EXTRA_STREAM, uri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-
-                context.startActivity(
-                    Intent.createChooser(
-                        intent,
-                        "Bagikan file CSV ke:"
-                    )
-                )
+                context.startActivity(Intent.createChooser(intent, "Bagikan file CSV ke:"))
+                exportCsvTrigger = false
             }
-            exportCsvTrigger = false
         }
     }
 
@@ -190,47 +185,70 @@ fun SupplierScreen(viewModel: SupplierViewModel, onShowInfo: (Supplier) -> Unit)
                 Text(
                     text = if (editingSupplier != null) "Edit Supplier" else "Tambah Supplier",
                     fontWeight = FontWeight.Bold,
-                    color = AccentText
+                    color = DarkText
                 )
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nama Supplier", color = AccentText) }, colors = TextFieldDefaults.outlinedTextFieldColors(textColor = AccentText))
-                    OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email", color = AccentText) }, colors = TextFieldDefaults.outlinedTextFieldColors(textColor = AccentText))
-                    OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Telepon", color = AccentText) }, colors = TextFieldDefaults.outlinedTextFieldColors(textColor = AccentText))
-                    OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Alamat", color = AccentText) }, colors = TextFieldDefaults.outlinedTextFieldColors(textColor = AccentText))
-                    OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text("Kota", color = AccentText) }, colors = TextFieldDefaults.outlinedTextFieldColors(textColor = AccentText))
-                    OutlinedTextField(value = province, onValueChange = { province = it }, label = { Text("Provinsi", color = AccentText) }, colors = TextFieldDefaults.outlinedTextFieldColors(textColor = AccentText))
-                    OutlinedTextField(value = postalCode, onValueChange = { postalCode = it }, label = { Text("Kode Pos", color = AccentText) }, colors = TextFieldDefaults.outlinedTextFieldColors(textColor = AccentText))
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    listOf(
+                        Triple(name, "Nama Supplier") { value: String -> name = value },
+                        Triple(email, "Email") { value: String -> email = value },
+                        Triple(phone, "Telepon") { value: String -> phone = value },
+                        Triple(address, "Alamat") { value: String -> address = value },
+                        Triple(city, "Kota") { value: String -> city = value },
+                        Triple(province, "Provinsi") { value: String -> province = value },
+                        Triple(postalCode, "Kode Pos") { value: String -> postalCode = value },
+                    ).forEach { (state, label, onValueChange) ->
+                        OutlinedTextField(
+                            value = state,
+                            onValueChange = onValueChange,
+                            label = { Text(label, color = DarkText) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                textColor = DarkText,
+                                focusedLabelColor = DarkText,
+                                unfocusedLabelColor = DarkText.copy(alpha = 0.7f)
+                            )
+                        )
+                    }
                 }
             },
-            backgroundColor = DarkCard,
+            backgroundColor = LightBackground,
             confirmButton = {
-                Button(onClick = {
-                    val supplier = Supplier(
-                        id = editingSupplier?.id ?: 0,
-                        name = name,
-                        email = email,
-                        phone = phone,
-                        address = address,
-                        city = city,
-                        province = province,
-                        postalCode = postalCode
-                    )
-
-                    if (editingSupplier != null) {
-                        viewModel.updateSupplier(supplier)
-                    } else {
-                        viewModel.addSupplier(supplier)
-                    }
-                    showForm = false
-                }, colors = ButtonDefaults.buttonColors(backgroundColor = AccentGreen)) {
-                    Text("Simpan", color = AccentText)
+                Button(
+                    onClick = {
+                        val supplier = Supplier(
+                            id = editingSupplier?.id ?: 0,
+                            name = name,
+                            email = email,
+                            phone = phone,
+                            address = address,
+                            city = city,
+                            province = province,
+                            postalCode = postalCode
+                        )
+                        if (editingSupplier != null) {
+                            viewModel.updateSupplier(supplier)
+                        } else {
+                            viewModel.addSupplier(supplier)
+                        }
+                        showForm = false
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = PrimaryBlue)
+                ) {
+                    Text("Simpan", color = Color.White)
                 }
             },
             dismissButton = {
-                Button(onClick = { showForm = false }, colors = ButtonDefaults.buttonColors(backgroundColor = BorderGray)) {
-                    Text("Batal", color = AccentText)
+                OutlinedButton(
+                    onClick = { showForm = false },
+                    colors = ButtonDefaults.outlinedButtonColors(backgroundColor = Color.Transparent),
+                    border = BorderStroke(1.dp, DarkText)
+                ) {
+                    Text("Batal", color = DarkText)
                 }
             }
         )

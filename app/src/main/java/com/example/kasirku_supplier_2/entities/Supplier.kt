@@ -1,4 +1,4 @@
-package com.example.kasirku_supplier_2.models
+package com.example.kasirku_supplier_2.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

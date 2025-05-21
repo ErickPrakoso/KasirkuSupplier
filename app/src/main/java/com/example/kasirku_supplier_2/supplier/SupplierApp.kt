@@ -1,7 +1,7 @@
-package com.example.kasirku_supplier_2.ui.screens
+package com.example.kasirku_supplier_2.supplier
 
 import androidx.compose.runtime.*
-import com.example.kasirku_supplier_2.models.Supplier
+import com.example.kasirku_supplier_2.entities.Supplier
 import com.example.kasirku_supplier_2.ui.viewmodel.SupplierViewModel
 
 @Composable

@@ -10,16 +10,15 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kasirku_supplier_2.R
-import com.example.kasirku_supplier_2.models.Supplier
-import com.example.kasirku_supplier_2.ui.theme.AccentText
-import com.example.kasirku_supplier_2.ui.theme.DarkCard
+import com.example.kasirku_supplier_2.entities.Supplier
+import com.example.kasirku_supplier_2.ui.theme.DarkText
+import com.example.kasirku_supplier_2.ui.theme.LightCard
 
 @Composable
 fun SupplierItem(
@@ -35,8 +34,8 @@ fun SupplierItem(
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
-        backgroundColor = DarkCard,
-        elevation = 4.dp
+        backgroundColor = LightCard,
+        elevation = 6.dp
     ) {
         Row(
             modifier = Modifier
@@ -59,11 +58,11 @@ fun SupplierItem(
                     contentScale = ContentScale.Fit
                 )
                 Column {
-                    Text("ID : ${supplier.id}", color = AccentText, fontSize = 12.sp)
-                    Text(supplier.name, fontWeight = FontWeight.Bold, color = AccentText, fontSize = 18.sp)
+                    Text("ID : ${supplier.id}", color = DarkText, fontSize = 12.sp)
+                    Text(supplier.name, fontWeight = FontWeight.Bold, color = DarkText, fontSize = 18.sp)
                     Text(
                         "${supplier.address}, ${supplier.city}, ${supplier.province}, ${supplier.postalCode}",
-                        color = AccentText,
+                        color = DarkText,
                         fontSize = 13.sp
                     )
                 }
@@ -77,7 +76,7 @@ fun SupplierItem(
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = "More options",
-                        tint = Color.White,
+                        tint = DarkText,
                         modifier = Modifier.size(24.dp)
                     )
                 }
